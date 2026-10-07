@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueBlock Mini-App 🧠</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 15px;
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+        }
+
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .truth-check {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid #28a745;
+        }
+
+        .truth-check.fake {
+            border-left-color: #dc3545;
+        }
+
+        .truth-check.uncertain {
+            border-left-color: #ffc107;
+        }
+
+        .truth-score {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .score-high { background: #28a745; }
+        .score-medium { background: #ffc107; color: #333; }
+        .score-low { background: #dc3545; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .wallet-info {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .wallet-info.connected {
+            background: #e8f5e8;
+            border-color: #4caf50;
+        }
+
+        .wallet-info.not-connected {
+            background: #fff3e0;
+            border-color: #ff9800;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #c62828;
+        }
+
+        .success {
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #2e7d32;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 TrueBlock</h1>
+            <p>Mini-App para verificar la verdad en Base</p>
+        </div>
+
+        <div class="content">
+            <!-- Wallet Connection -->
+            <div class="section">
+                <h3>🔗 Conectar Wallet</h3>
+                <div id="walletInfo" class="wallet-info not-connected">
+                    <p>Conecta tu wallet de Base para empezar</p>
+                    <button id="connectWallet" class="btn">Conectar Wallet</button>
+                </div>
+            </div>
+
+            <!-- Submit Truth Check -->
+            <div class="section">
+                <h3>📝 Enviar Verificación</h3>
+                <form id="truthCheckForm">
+                    <div class="form-group">
+                        <label for="content">Contenido a verificar:</label>
+                        <textarea id="content" rows="3" placeholder="Escribe algo que quieras verificar..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Categoría:</label>
+                        <select id="category">
+                            <option value="news">📰 Noticia</option>
+                            <option value="meme">😄 Meme</option>
+                            <option value="quote">💬 Cita</option>
+                            <option value="fact">🔍 Dato</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">🚀 Enviar para Verificación</button>
+                </form>
+            </div>
+
+            <!-- Vote on Truth Check -->
+            <div class="section">
+                <h3>🗳️ Votar en Verificaciones</h3>
+                <div id="voteSection">
+                    <p>Conecta tu wallet para ver verificaciones pendientes</p>
+                </div>
+            </div>
+
+            <!-- Recent Truth Checks -->
+            <div class="section">
+                <h3>📋 Verificaciones Recientes</h3>
+                <div id="recentChecks">
+                    <div class="loading">Cargando verificaciones...</div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="section">
+                <h3>📊 Estadísticas del Mini-App</h3>
+                <div id="stats" class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalChecks">-</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="verifiedChecks">-</div>
+                        <div class="stat-label">Verificadas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalUsers">-</div>
+                        <div class="stat-label">Usuarios</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalVotes">-</div>
+                        <div class="stat-label">Votos</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
