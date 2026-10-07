@@ -34,6 +34,7 @@ const filecoinRoutes = require('./routes/filecoin');
 const confidentialRoutes = require('./routes/confidential');
 const flareRoutes = require('./routes/flare');
 const verifyRoutes = require('./routes/verify');
+const imageRoutes = require('./routes/image');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -203,6 +204,8 @@ app.use('/api/confidential', confidentialLimiter, confidentialRoutes);
 app.use('/api/flare', validationLimiter, flareRoutes);
 // Verificación abierta: chequeos publicados + cobertura en medios, sin cuenta.
 app.use('/api/verify', searchLimiter, verifyRoutes);
+// ¿Imagen generada con IA? Detector de Roboflow + búsqueda inversa.
+app.use('/api/image', searchLimiter, imageRoutes);
 
 // Aplicar rate limiter específico para búsquedas después de las rutas news
 app.use('/api/news/search', searchLimiter);
