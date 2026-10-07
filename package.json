@@ -46,6 +46,7 @@
   "dependencies": {
     "@lighthouse-web3/sdk": "^0.4.1",
     "@zama-fhe/relayer-sdk": "^0.1.2",
+    "ai": "^7.0.131",
     "axios": "^1.5.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",

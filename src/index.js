@@ -33,6 +33,7 @@ const truthboardRoutes = require('./routes/truthboard');
 const filecoinRoutes = require('./routes/filecoin');
 const confidentialRoutes = require('./routes/confidential');
 const flareRoutes = require('./routes/flare');
+const verifyRoutes = require('./routes/verify');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -52,6 +53,10 @@ if (trustProxy) {
   app.set('trust proxy', false);
   console.log(`🔧 Trust proxy deshabilitado para desarrollo local`);
 }
+
+// Página pública (public/). En Vercel la sirve el CDN; esto es para correrla en local.
+// Va antes de helmet porque su CSP bloquearía el script y las fuentes de la página.
+app.use(express.static(require('path').join(__dirname, '../public')));
 
 // Middleware de seguridad
 app.use(helmet({
@@ -196,6 +201,8 @@ app.use('/api/truthboard', publishLimiter, truthboardRoutes);
 app.use('/api/filecoin', filecoinLimiter, filecoinRoutes);
 app.use('/api/confidential', confidentialLimiter, confidentialRoutes);
 app.use('/api/flare', validationLimiter, flareRoutes);
+// Verificación abierta: chequeos publicados + cobertura en medios, sin cuenta.
+app.use('/api/verify', searchLimiter, verifyRoutes);
 
 // Aplicar rate limiter específico para búsquedas después de las rutas news
 app.use('/api/news/search', searchLimiter);
