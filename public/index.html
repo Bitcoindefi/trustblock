@@ -129,9 +129,9 @@
   .model-top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px}
   .model-top strong{color:var(--ink);font-size:16px}
   .model-test{font-size:14px;color:var(--muted)}
-  .links{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
-  .links a{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);font-weight:500}
-  .links a:hover{border-color:var(--line-2)}
+  .rlinks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+  .rlinks a{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);font-weight:500}
+  .rlinks a:hover{border-color:var(--line-2)}
   @media (max-width:560px){
     main{padding:36px 0 64px;gap:56px}
     .wrap{padding:0 16px}
@@ -495,10 +495,10 @@
           : 'No pudimos consultar el detector ahora. Probá de nuevo en un rato.'));
     }
     const links = r.reverseSearch.length
-      ? el('ul', { class: 'links' }, r.reverseSearch.map((s) => el('li', {}, el('a', { href: s.url, target: '_blank', rel: 'noopener' }, s.name, el('span', { 'aria-hidden': 'true' }, '↗')))))
+      ? el('ul', { class: 'rlinks' }, r.reverseSearch.map((s) => el('li', {}, el('a', { href: s.url, target: '_blank', rel: 'noopener' }, s.name, el('span', { 'aria-hidden': 'true' }, '↗')))))
       : el('div', { style: 'display:flex;flex-direction:column;gap:10px' },
           el('p', {}, 'Con una imagen subida, abrí uno de estos buscadores y cargala ahí. Con el link de la imagen te armamos la búsqueda directa.'),
-          el('ul', { class: 'links' },
+          el('ul', { class: 'rlinks' },
             el('li', {}, el('a', { href: 'https://lens.google.com/', target: '_blank', rel: 'noopener' }, 'Google Lens', el('span', { 'aria-hidden': 'true' }, '↗'))),
             el('li', {}, el('a', { href: 'https://tineye.com/', target: '_blank', rel: 'noopener' }, 'TinEye', el('span', { 'aria-hidden': 'true' }, '↗')))));
     const traceCard = el('article', { class: 'card' },
