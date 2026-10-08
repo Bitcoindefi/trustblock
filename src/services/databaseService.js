@@ -3,13 +3,16 @@ const path = require('path');
 
 class DatabaseService {
   constructor() {
-    this.dbPath = path.join(__dirname, '../../data/database.json');
+    // En Vercel el disco es de solo lectura: se trabaja sobre /tmp, sembrado con data/database.json.
+    this.seedPath = path.join(__dirname, '../../data/database.json');
+    this.dbPath = process.env.VERCEL ? '/tmp/trustblock-database.json' : this.seedPath;
     this.data = null;
   }
 
   async initialize() {
     try {
-      const dbContent = await fs.readFile(this.dbPath, 'utf8');
+      const dbContent = await fs.readFile(this.dbPath, 'utf8')
+        .catch(() => fs.readFile(this.seedPath, 'utf8'));
       this.data = JSON.parse(dbContent);
       console.log('✅ Base de datos inicializada');
     } catch (error) {
