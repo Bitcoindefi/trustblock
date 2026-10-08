@@ -118,6 +118,17 @@
   .meter{height:12px;border-radius:999px;background:#E6EAEF;overflow:hidden}
   .meter span{display:block;height:100%;border-radius:999px}
   .big{font-family:var(--mono);font-size:44px;font-weight:500;line-height:1}
+  fieldset.models{border:0;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+  fieldset.models legend{font-weight:600;font-size:15px;margin-bottom:8px;padding:0}
+  fieldset.models .hint{grid-column:1/-1}
+  .model{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;background:var(--surface)}
+  .model:has(input:checked){border-color:var(--accent);box-shadow:0 0 0 2px rgba(29,78,216,.18)}
+  .model:has(input:disabled){opacity:.55;cursor:not-allowed}
+  .model input{margin-top:4px;width:18px;height:18px;accent-color:var(--accent)}
+  .model-body{display:flex;flex-direction:column;gap:6px;font-size:15px;line-height:1.45;color:var(--ink-2)}
+  .model-top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px}
+  .model-top strong{color:var(--ink);font-size:16px}
+  .model-test{font-size:14px;color:var(--muted)}
   .links{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
   .links a{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);font-weight:500}
   .links a:hover{border-color:var(--line-2)}
@@ -195,8 +206,37 @@
         </div>
       </div>
       <img id="img-preview" alt="Vista previa de la imagen elegida" hidden>
+      <fieldset class="models">
+        <legend>Elegí el detector</legend>
+        <label class="model">
+          <input type="radio" name="model" value="general" checked>
+          <span class="model-body">
+            <span class="model-top"><strong>General</strong><span class="mono">Detectly v1 · 163 MB · en tu dispositivo</span></span>
+            <span>Para escenas, objetos, paisajes y arte hecho con Midjourney, DALL·E o Stable Diffusion.</span>
+            <span class="model-test">En nuestra prueba acertó 4 de 6: detectó el pavo real y el papa, pero marcó como IA un retrato real recortado y no vio una cara sintética.</span>
+          </span>
+        </label>
+        <label class="model">
+          <input type="radio" name="model" value="caras">
+          <span class="model-body">
+            <span class="model-top"><strong>Caras (deepfakes)</strong><span class="mono">ViT · 87 MB · en tu dispositivo</span></span>
+            <span>Pensado para primeros planos de rostros manipulados. No sirve para escenas ni objetos.</span>
+            <span class="model-test">En nuestra prueba acertó 3 de 6: dijo "real" a casi todo, incluidas las tres imágenes hechas con IA.</span>
+          </span>
+        </label>
+        <label class="model" id="model-roboflow">
+          <input type="radio" name="model" value="roboflow">
+          <span class="model-body">
+            <span class="model-top"><strong>Roboflow</strong><span class="mono" id="roboflow-tag">en la nube</span></span>
+            <span>Un modelo de Roboflow Universe que corre en sus servidores: la imagen se envía para analizarla.</span>
+            <span class="model-test" id="roboflow-note">Se activa cuando el sitio tiene configurada una clave de Roboflow.</span>
+          </span>
+        </label>
+        <p class="hint">Los modelos "en tu dispositivo" se descargan una vez y quedan guardados en el navegador; la imagen no sale de tu equipo.</p>
+      </fieldset>
+      <div id="img-progress" class="hint" aria-live="polite" hidden></div>
       <div class="row">
-        <p class="hint">La imagen se achica en tu navegador antes de enviarse y no la guardamos.</p>
+        <p class="hint">La imagen se achica en tu navegador y no la guardamos.</p>
         <button type="submit" class="primary" id="img-go"><span id="img-go-label">Analizar imagen</span></button>
       </div>
       <div id="img-error" class="error" role="alert" hidden></div>
@@ -447,7 +487,7 @@
           el('span', { class: 'big', style: `color:${color}` }, `${pct}%`), el('strong', { style: 'font-size:18px' }, label)),
         el('div', { class: 'meter', role: 'img', 'aria-label': `${pct}% de probabilidad de IA` }, el('span', { style: `width:${pct}%;background:${color}` })),
         el('p', {}, 'Es una estimación: los detectores se equivocan, sobre todo con imágenes comprimidas, recortadas o pasadas por WhatsApp. Usalo como una pista más, nunca como prueba.'),
-        el('span', { class: 'mono' }, `Roboflow · ${d.model}`));
+        el('span', { class: 'mono' }, d.source || `Roboflow · ${d.model}`));
     } else {
       detectorCard = el('article', { class: 'card' }, el('h3', {}, 'Detector de imágenes con IA'),
         el('p', {}, d.status === 'no_configurado'
@@ -470,20 +510,85 @@
     imgResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
+  // Modelos que corren en el navegador con transformers.js: la imagen no sale del equipo.
+  const TRANSFORMERS = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1';
+  const LOCAL_MODELS = {
+    general: { id: 'amrita-detectly/detect-ai-image-v1', ai: 'artificial', name: 'Detectly v1 · en tu dispositivo' },
+    caras: { id: 'onnx-community/deepfake_vs_real_image_detection-ONNX', ai: 'Fake', name: 'ViT deepfakes · en tu dispositivo' },
+  };
+  const loaded = {};
+  const progress = $('img-progress');
+
+  function loadModel(key) {
+    if (!loaded[key]) {
+      const m = LOCAL_MODELS[key], files = {};
+      loaded[key] = import(TRANSFORMERS).then(({ pipeline }) => pipeline('image-classification', m.id, {
+        dtype: 'q8',
+        progress_callback: (p) => {
+          if (p.status !== 'progress' || !p.total) return;
+          files[p.file] = [p.loaded, p.total];
+          const [done, total] = Object.values(files).reduce((a, [l, t]) => [a[0] + l, a[1] + t], [0, 0]);
+          progress.hidden = false;
+          progress.textContent = `Descargando el modelo (solo la primera vez): ${Math.round(done / 1e6)} de ${Math.round(total / 1e6)} MB`;
+        },
+      })).catch((e) => { delete loaded[key]; throw e; });
+    }
+    return loaded[key];
+  }
+
+  async function detectLocal(key, src) {
+    const classify = await loadModel(key);
+    progress.textContent = 'Analizando en tu dispositivo…'; progress.hidden = false;
+    const out = await classify(src, { top_k: null });
+    const ai = out.find((o) => o.label === LOCAL_MODELS[key].ai)?.score ?? 0;
+    return { status: 'ok', source: LOCAL_MODELS[key].name, aiProbability: ai };
+  }
+
+  function reverseLinks(url) {
+    if (!url) return [];
+    const u = encodeURIComponent(url);
+    return [
+      { name: 'Google Lens', url: `https://lens.google.com/uploadbyurl?url=${u}` },
+      { name: 'TinEye', url: `https://tineye.com/search?url=${u}` },
+      { name: 'Bing Visual Search', url: `https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:${u}` },
+    ];
+  }
+
+  // Roboflow solo se puede elegir si el sitio tiene clave configurada.
+  fetch('/api/image/status').then((r) => r.json()).then((s) => {
+    if (s.roboflow) { $('roboflow-tag').textContent = `en la nube · ${s.model}`; $('roboflow-note').textContent = 'Activo en este sitio.'; }
+    else document.querySelector('input[value=roboflow]').disabled = true;
+  }).catch(() => { document.querySelector('input[value=roboflow]').disabled = true; });
+
   imgForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     imgError.hidden = true;
     const url = safeUrl(imgUrl.value.trim());
     if (!imgData && !url) { imgError.textContent = 'Subí una imagen o pegá el link de una.'; imgError.hidden = false; return; }
+    const choice = imgForm.querySelector('input[name=model]:checked').value;
     imgGo.disabled = true; $('img-go-label').textContent = 'Analizando…';
     try {
-      const res = await fetch('/api/image', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(imgData ? { image: imgData } : { url }) });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'No pudimos analizar la imagen ahora.');
+      let data;
+      if (choice === 'roboflow') {
+        const res = await fetch('/api/image', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(imgData ? { image: imgData } : { url }) });
+        data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'No pudimos analizar la imagen ahora.');
+        if (data.detector.status === 'ok') data.detector.source = `Roboflow · ${data.detector.model}`;
+      } else {
+        let detector;
+        try { detector = await detectLocal(choice, imgData ? `data:image/jpeg;base64,${imgData}` : url); }
+        catch (err) {
+          throw new Error(url && !imgData
+            ? 'No pudimos leer esa imagen desde su link (el sitio no lo permite). Descargala y subila.'
+            : 'No pudimos cargar el detector en este navegador. Probá con otro navegador o en una computadora.');
+        }
+        data = { detector, reverseSearch: reverseLinks(url) };
+      }
       renderImage(data);
     } catch (err) {
       imgError.textContent = err.message; imgError.hidden = false;
     } finally {
+      progress.hidden = true;
       imgGo.disabled = false; $('img-go-label').textContent = 'Analizar imagen';
     }
   });

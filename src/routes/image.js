@@ -5,6 +5,12 @@ const router = express.Router();
 // Vercel corta los cuerpos de más de 4,5 MB: la página achica la imagen antes de mandarla.
 const MAX_BASE64 = 4 * 1024 * 1024;
 
+// GET /api/image/status: si el detector de Roboflow está activo (la página lo habilita o no).
+router.get('/status', (req, res) => {
+  const on = Boolean(process.env.ROBOFLOW_API_KEY && process.env.ROBOFLOW_MODEL);
+  res.json({ roboflow: on, model: on ? process.env.ROBOFLOW_MODEL : null });
+});
+
 // POST /api/image  { image: "<base64 sin prefijo>" }  o  { url: "https://..." }
 router.post('/', async (req, res) => {
   const { image, url } = req.body || {};

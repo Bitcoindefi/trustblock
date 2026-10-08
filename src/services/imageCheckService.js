@@ -6,11 +6,11 @@
 //   ROBOFLOW_API_KEY     clave de la cuenta de Roboflow
 //   ROBOFLOW_MODEL       modelo y versión, p. ej. "fnd-classifier/1"
 //   ROBOFLOW_AI_CLASSES  etiquetas del modelo que significan "hecha con IA",
-//                        separadas por coma (por defecto: ai,ai-generated,ai_generated,fake,generated,synthetic)
+//                        separadas por coma (por defecto: ai,ai-generated,ai_generated,artificial,fake,generated,synthetic)
 
 const CLASSIFY_URL = 'https://classify.roboflow.com';
 const TIMEOUT_MS = 15000;
-const DEFAULT_AI_CLASSES = 'ai,ai-generated,ai_generated,fake,generated,synthetic';
+const DEFAULT_AI_CLASSES = 'ai,ai-generated,ai_generated,artificial,fake,generated,synthetic';
 
 function aiClasses() {
   return new Set((process.env.ROBOFLOW_AI_CLASSES || DEFAULT_AI_CLASSES)
